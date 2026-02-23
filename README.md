@@ -48,9 +48,9 @@ Key objectives:
 
 | Week | Focus |
 |------|-------|
-| 1 | **Setup & EDA:** Load dataset, explore distributions, check missing values ✅ |
-| 2 | **Preprocessing & Feature Engineering:** Handle missing data, encode categories, normalize numeric features ✅ |
-| 3 | **Modeling & MLflow:** Build classification models to predict diabetes risk, track experiments ✅ |
+| 1 | **Setup & EDA:** Load dataset, explore distributions, check missing values  |
+| 2 | **Preprocessing & Feature Engineering:** Handle missing data, encode categories, normalize numeric features  |
+| 3 | **Modeling & MLflow:** Build classification models to predict diabetes risk, track experiments  |
 | 4 | **API Development (FastAPI):** Deploy trained model as a REST API |
 | 5 | **Frontend Development (React):** Build a UI to interact with predictions |
 | 6 | **Containerization (Docker):** Containerize API and frontend |

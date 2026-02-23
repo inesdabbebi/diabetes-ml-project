@@ -1,0 +1,23 @@
+
+DIABETES DATASET — EDA SUMMARY
+================================
+Rows           : 20,000
+Columns        : 15
+Missing Values : 9925
+Numeric Cols   : 8
+Categorical    : 6
+
+Target (Outcome):
+  Diabetic     : 16,726 (83.6%)
+  Non-diabetic : 3,274 (16.4%)
+  Imbalance Ratio: 0.20:1
+
+Top Correlated Features with Outcome:
+Glucose                       0.616
+BMI                           0.241
+Cholesterol                   0.008
+Blood Pressure                0.007
+Diabetes Pedigree Function    0.005
+Skin Thickness                0.003
+Age                           0.002
+Insulin                       0.001

@@ -1,0 +1,4 @@
+,accuracy,f1,roc_auc
+Logistic Regression,0.9558,0.9577,0.997
+KNN,0.8455,0.8586,0.9112
+Random Forest,0.9722,0.9726,0.9957

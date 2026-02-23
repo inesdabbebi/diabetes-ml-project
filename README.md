@@ -20,7 +20,7 @@ Key objectives:
 ## Dataset
 
 **Title:** Diabetes Risk Prediction Dataset  
-**Source:** Public health dataset (modified/cleaned for academic use)  
+**Source:** Public health dataset "https://data.mendeley.com/datasets/xv25yjbzkm/2" 
 **Format:** CSV (`.csv`)  
 **Rows:** 20,000 patients
 

@@ -1,0 +1,23 @@
+artifact_path: file:C:/Users/dell/diabetes-ml-project/mlruns/1/models/m-f19229de4f7a4c388f2ff4c4e2b42fef/artifacts
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.3
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+mlflow_version: 3.10.0
+model_id: m-f19229de4f7a4c388f2ff4c4e2b42fef
+model_size_bytes: 1125
+model_uuid: m-f19229de4f7a4c388f2ff4c4e2b42fef
+prompts: null
+run_id: 40e1afc44b02417bb2f942789ec08816
+utc_time_created: '2026-02-28 19:36:18.413011'

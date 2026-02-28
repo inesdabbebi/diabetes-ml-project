@@ -118,9 +118,9 @@ y_test.to_csv("data/y_test.csv", index=False)
 X_train_resampled.to_csv("data/X_train_resampled.csv", index=False)
 y_train_resampled.to_csv("data/y_train_resampled.csv", index=False)
 
-print("\n✔ Saved processed data files:")
+print("\n Saved processed data files:")
 print("   data/X_train.csv, X_test.csv")
 print("   data/y_train.csv, y_test.csv")
 print("   data/X_train_resampled.csv, y_train_resampled.csv")
 
-print("\n✅  Preprocessing complete!")
+print("\n  Preprocessing complete!")

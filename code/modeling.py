@@ -14,9 +14,6 @@ from sklearn.metrics import (
     accuracy_score, f1_score, roc_auc_score,
     classification_report, confusion_matrix, roc_curve
 )
-from sklearn.decomposition import PCA
-from sklearn.cluster       import KMeans
-from sklearn.metrics       import silhouette_score
 
 import mlflow
 import mlflow.sklearn
@@ -31,7 +28,7 @@ os.makedirs(MODELS_DIR,  exist_ok=True)
 
 # ── Load Data ────────────────────────────────────────────
 print("=" * 55)
-print("  MODELING — CLASSIFICATION & CLUSTERING")
+print("  MODELING — CLASSIFICATION")
 print("=" * 55)
 
 X_train = pd.read_csv("data/X_train_resampled.csv")
@@ -42,10 +39,10 @@ y_test  = pd.read_csv("data/y_test.csv").squeeze()
 print(f"\n✔ Train: {X_train.shape}  |  Test: {X_test.shape}")
 
 # ════════════════════════════════════════════════════════
-#  PART 1 — CLASSIFICATION
+#  CLASSIFICATION
 # ════════════════════════════════════════════════════════
 print("\n" + "═" * 55)
-print("  PART 1: CLASSIFICATION")
+print("  CLASSIFICATION")
 print("═" * 55)
 
 models = {
@@ -190,112 +187,6 @@ plt.savefig(f"{FIGURES_DIR}/12_knn_best_k.png", dpi=150)
 plt.close()
 print(f"✔ Saved → reports/figures/12_knn_best_k.png")
 
-# ════════════════════════════════════════════════════════
-#  PART 2 — CLUSTERING (K-Means + PCA)
-# ════════════════════════════════════════════════════════
-print("\n" + "═" * 55)
-print("  PART 2: CLUSTERING (K-Means + PCA)")
-print("═" * 55)
-
-X_all = pd.concat([X_train, X_test], ignore_index=True)
-y_all = pd.concat([y_train, y_test], ignore_index=True)
-
-# PCA
-print("\n── PCA ───────────────────────────────────────────────")
-pca = PCA(n_components=2, random_state=42)
-X_pca = pca.fit_transform(X_all)
-joblib.dump(pca, f"{MODELS_DIR}/pca.pkl")
-print(f"  PC1 explains: {pca.explained_variance_ratio_[0]*100:.1f}%")
-print(f"  PC2 explains: {pca.explained_variance_ratio_[1]*100:.1f}%")
-print(f"  Total       : {sum(pca.explained_variance_ratio_)*100:.1f}%")
-
-# Elbow Method
-print("\n── K-Means Elbow Method ──────────────────────────────")
-inertias   = []
-sil_scores = []
-K_range    = range(2, 9)
-
-for k in K_range:
-    km = KMeans(n_clusters=k, random_state=42, n_init=10)
-    km.fit(X_pca)
-    inertias.append(km.inertia_)
-    sil_scores.append(silhouette_score(X_pca, km.labels_))
-    print(f"  k={k} | Inertia={km.inertia_:.1f} | Silhouette={sil_scores[-1]:.4f}")
-
-fig, axes = plt.subplots(1, 2, figsize=(14, 5))
-axes[0].plot(K_range, inertias, "o-", color="#4C9BE8", lw=2)
-axes[0].set_title("Elbow Method — Inertia", fontsize=13, fontweight="bold")
-axes[0].set_xlabel("Number of Clusters (k)")
-axes[0].set_ylabel("Inertia")
-axes[1].plot(K_range, sil_scores, "o-", color="#E8694C", lw=2)
-axes[1].set_title("Silhouette Score", fontsize=13, fontweight="bold")
-axes[1].set_xlabel("Number of Clusters (k)")
-axes[1].set_ylabel("Score")
-plt.suptitle("K-Means — Optimal Number of Clusters", fontsize=14, fontweight="bold")
-plt.tight_layout()
-plt.savefig(f"{FIGURES_DIR}/13_kmeans_elbow.png", dpi=150)
-plt.close()
-print(f"\n✔ Saved → reports/figures/13_kmeans_elbow.png")
-
-# Best K
-best_k = list(K_range)[np.argmax(sil_scores)]
-print(f"\n  Best k = {best_k} (Silhouette = {max(sil_scores):.4f})")
-
-kmeans = KMeans(n_clusters=best_k, random_state=42, n_init=10)
-cluster_labels = kmeans.fit_predict(X_pca)
-joblib.dump(kmeans, f"{MODELS_DIR}/kmeans.pkl")
-
-# PCA Scatter
-fig, axes = plt.subplots(1, 2, figsize=(16, 7))
-palette = sns.color_palette("Set2", best_k)
-
-for c in range(best_k):
-    mask = cluster_labels == c
-    axes[0].scatter(X_pca[mask, 0], X_pca[mask, 1],
-                    s=12, alpha=0.5, color=palette[c], label=f"Cluster {c}")
-axes[0].set_title(f"PCA — K-Means Clusters (k={best_k})", fontsize=13, fontweight="bold")
-axes[0].set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
-axes[0].set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
-axes[0].legend(markerscale=3, fontsize=9)
-
-for label, color, lname in [(0, "#4C9BE8", "Non-diabetic"), (1, "#E8694C", "Diabetic")]:
-    mask = y_all.values == label
-    axes[1].scatter(X_pca[mask, 0], X_pca[mask, 1],
-                    s=12, alpha=0.5, color=color, label=lname)
-axes[1].set_title("PCA — True Diabetic Status", fontsize=13, fontweight="bold")
-axes[1].set_xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}%)")
-axes[1].set_ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}%)")
-axes[1].legend(markerscale=3, fontsize=9)
-
-plt.suptitle("PCA 2D Projection", fontsize=14, fontweight="bold")
-plt.tight_layout()
-plt.savefig(f"{FIGURES_DIR}/14_pca_clusters.png", dpi=150)
-plt.close()
-print(f"✔ Saved → reports/figures/14_pca_clusters.png")
-
-# Cluster Profiles
-X_all_copy             = X_all.copy()
-X_all_copy["cluster"]  = cluster_labels
-X_all_copy["diabetic"] = y_all.values
-cluster_profile = X_all_copy.groupby("cluster").mean().round(3)
-print("\n── Cluster Profiles ──────────────────────────────────")
-print(cluster_profile.to_string())
-cluster_profile.to_csv("reports/cluster_profiles.csv")
-print(f"\n✔ Saved → reports/cluster_profiles.csv")
-
-# Cluster Heatmap
-fig, ax = plt.subplots(figsize=(14, 5))
-profile_norm = (cluster_profile - cluster_profile.min()) / \
-               (cluster_profile.max() - cluster_profile.min())
-sns.heatmap(profile_norm.T, annot=cluster_profile.T.round(2),
-            fmt="g", cmap="YlOrRd", ax=ax, linewidths=0.5)
-ax.set_title("Cluster Profiles — Normalized Feature Means", fontsize=13, fontweight="bold")
-ax.set_xlabel("Cluster")
-plt.tight_layout()
-plt.savefig(f"{FIGURES_DIR}/15_cluster_profiles_heatmap.png", dpi=150)
-plt.close()
-print(f"✔ Saved → reports/figures/15_cluster_profiles_heatmap.png")
-
 # ── Final Summary ────────────────────────────────────────
 print("\n" + "═" * 55)
 print("  FINAL SUMMARY")
@@ -305,7 +196,5 @@ print(f"\n🏆 Best Model   : {best_model}")
 print(f"   Accuracy     : {results_df.loc[best_model, 'accuracy']:.4f}")
 print(f"   F1-Score     : {results_df.loc[best_model, 'f1']:.4f}")
 print(f"   ROC-AUC      : {results_df.loc[best_model, 'roc_auc']:.4f}")
-print(f"\n🔵 Clustering   : {best_k} patient groups identified")
-print(f"   Silhouette   : {max(sil_scores):.4f}")
-print(f"\n📊 MLflow UI    : mlflow ui  →  http://127.0.0.1:5000")
-print(f"\n✅  All done! Check reports/figures/ for all plots.")
+print(f"\n   MLflow UI    : mlflow ui  →  http://127.0.0.1:5000")
+print(f"\n✔  All done! Check reports/figures/ for all plots.")

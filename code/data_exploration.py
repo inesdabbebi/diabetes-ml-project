@@ -17,8 +17,8 @@ df = pd.read_csv(DATA_PATH)
 print("=" * 55)
 print("  DIABETES DATASET — EXPLORATORY DATA ANALYSIS")
 print("=" * 55)
-print(f"\n📦 Shape : {df.shape[0]:,} rows × {df.shape[1]} columns")
-print("\n📋 Columns:")
+print(f"\n Shape : {df.shape[0]:,} rows × {df.shape[1]} columns")
+print("\n Columns:")
 print(df.columns.tolist())
 
 # ── 2. Basic Info ────────────────────────────────────────
@@ -184,4 +184,4 @@ with open("reports/eda_summary.txt", "w") as f:
     f.write(summary)
 
 print("\n" + summary)
-print("\n✅  EDA complete! All figures saved to reports/figures/")
+print("\n  EDA complete! All figures saved to reports/figures/")

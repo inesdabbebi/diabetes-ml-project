@@ -82,17 +82,11 @@ Key objectives:
 | KNN | K-Nearest Neighbors — best k selected via accuracy loop (k=1 to 20) |
 | Random Forest | Ensemble of 200 decision trees — best overall performance |
 
-**Clustering** — Identify patient risk groups:
 
-| Technique | Description |
-|-----------|-------------|
-| PCA | Reduce dimensions to 2D for visualization |
-| K-Means | Group patients by similarity — best k via Elbow + Silhouette |
 
 ### 4. Evaluation Metrics
 
 **Classification:** Accuracy, F1-Score, ROC-AUC, Confusion Matrix  
-**Clustering:** Silhouette Score, Inertia (Elbow Method)
 
 ### 5. API Development (FastAPI) *(Week 4)*
 Expose the best trained model as a REST API for external applications.

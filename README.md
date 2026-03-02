@@ -52,7 +52,7 @@ Key objectives:
 | 2 | **Preprocessing & Feature Engineering:** Handle missing data, encode categories, normalize numeric features  |
 | 3 | **Modeling & MLflow:** Build classification models to predict diabetes risk, track experiments  |
 | 4 | **API Development (FastAPI):** Deploy trained model as a REST API |
-| 5 | **Frontend Development (React):** Build a UI to interact with predictions |
+| 5 | **Frontend Development :** Build a UI to interact with predictions |
 | 6 | **Containerization (Docker):** Containerize API and frontend |
 | 7 | **Deployment & Final Review:** Deploy solution, evaluate performance, document insights |
 
@@ -91,7 +91,7 @@ Key objectives:
 ### 5. API Development (FastAPI) *(Week 4)*
 Expose the best trained model as a REST API for external applications.
 
-### 6. Frontend Development (React) *(Week 5)*
+### 6. Frontend Development  *(Week 5)*
 Build an interactive interface to input patient features and get predictions.
 
 ### 7. Containerization (Docker) *(Week 6)*

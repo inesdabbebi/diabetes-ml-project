@@ -1,0 +1,8 @@
+# Nginx sert directement le fichier index.html
+FROM nginx:stable-alpine
+
+# Copie ton index.html dans le dossier que Nginx sert
+COPY index.html /usr/share/nginx/html/index.html
+
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

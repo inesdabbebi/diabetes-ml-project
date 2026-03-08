@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>GlycoScan — Neural Risk Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,200;0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=Instrument+Serif:ital@0;1&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  /* Dark palette — deep navy, not pure black */
+  --bg:       #080d14;
+  --bg2:      #0c1219;
+  --bg3:      #10181f;
+  --bg4:      #141e26;
+
+  --border:   rgba(255,255,255,0.05);
+  --border-2: rgba(255,255,255,0.09);
+  --border-3: rgba(255,255,255,0.14);
+
+  /* Single accent — clinical blue */
+  --blue:       #2d9cff;
+  --blue-soft:  rgba(45,156,255,0.1);
+  --blue-glow:  rgba(45,156,255,0.06);
+  --blue-line:  rgba(45,156,255,0.25);
+
+  /* Semantic */
+  --red:        #ff4d6a;
+  --red-soft:   rgba(255,77,106,0.1);
+  --amber:      #ffb443;
+  --amber-soft: rgba(255,180,67,0.1);
+  --green:      #34d399;
+  --green-soft: rgba(52,211,153,0.1);
+
+  /* Text scale — 4 levels */
+  --t1: #e2e8f0;   /* Primary */
+  --t2: #7a9ab0;   /* Secondary */
+  --t3: #3d5a70;   /* Tertiary */
+  --t4: #1e3040;   /* Ghost */
+
+  /* TYPOGRAPHY */
+  --sans:  'DM Sans', -apple-system, sans-serif;
+  --serif: 'Instrument Serif', Georgia, serif;
+  --mono:  'IBM Plex Mono', 'Courier New', monospace;
+
+  /* Spacing rhythm */
+  --r-sm: 8px;
+  --r:    12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+}
+
+html{ scroll-behavior:smooth; -webkit-font-smoothing:antialiased; }
+
+body{
+  background: var(--bg);
+  color: var(--t1);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Subtle grid */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(rgba(45,156,255,0.015) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(45,156,255,0.015) 1px,transparent 1px);
+  background-size:64px 64px;
+}
+
+/* Single soft orb — restrained */
+body::after{
+  content:'';position:fixed;
+  width:800px;height:800px;border-radius:50%;
+  top:-300px;left:-200px;z-index:0;pointer-events:none;
+  background:radial-gradient(circle,rgba(45,156,255,0.04),transparent 60%);
+}
+
+/* ── SIDEBAR ───────────────────────────────── */
+.sidebar{
+  position:fixed;left:0;top:0;bottom:0;width:248px;
+  background:rgba(8,13,20,0.92);
+  backdrop-filter:blur(24px);
+  border-right:1px solid var(--border);
+  padding:36px 20px 28px;
+  display:flex;flex-direction:column;
+  z-index:200;
+}
+
+/* Logo */
+.logo{
+  padding:0 8px;
+  margin-bottom:44px;
+}
+
+.logo-sup{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blue);
+  opacity: 0.7;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.logo-name{
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.5px;
+  color: var(--t1);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.logo-name span{
+  font-weight: 300;
+  color: var(--blue);
+}
+
+.logo-tag{
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 300;
+  font-style: italic;
+  color: var(--t3);
+  display: block;
+  letter-spacing: 0.2px;
+}
+
+/* Nav */
+.nav-section-label{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--t4);
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.nav-list{
+  display:flex;flex-direction:column;gap:1px;
+  flex:1;
+}
+
+.nav-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 8px;
+  border-radius: var(--r);
+  cursor:pointer;
+  transition:all 0.2s ease;
+  position:relative;
+}
+
+.nav-item:hover:not(.active){ background:rgba(255,255,255,0.03); }
+
+.nav-item.active{
+  background: var(--blue-glow);
+}
+
+.nav-item.active::before{
+  content:'';
+  position:absolute;left:-20px;top:6px;bottom:6px;
+  width:2px;border-radius:0 2px 2px 0;
+  background: var(--blue);
+  box-shadow: 0 0 8px var(--blue);
+}
+
+.nav-dot{
+  width:22px;height:22px;border-radius:50%;
+  border:1px solid var(--t4);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all 0.2s;
+}
+
+.nav-dot-num{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--t4);
+  line-height:1;
+}
+
+.nav-item.active .nav-dot{
+  border-color: var(--blue);
+  background: var(--blue);
+  box-shadow: 0 0 12px rgba(45,156,255,0.4);
+}
+.nav-item.active .nav-dot-num{ color: var(--bg); }
+
+.nav-item.done .nav-dot{
+  border-color: var(--green);
+  background: var(--green);
+}
+.nav-item.done .nav-dot-num{ color: var(--bg); }
+
+.nav-labels{ flex:1; }
+
+.nav-title{
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--t3);
+  display:block;
+  letter-spacing: -0.1px;
+  transition:color 0.2s;
+}
+
+.nav-sub{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t4);
+  display:block;
+  margin-top:2px;
+  letter-spacing: 0.5px;
+  transition:color 0.2s;
+}
+
+.nav-item.active .nav-title{ color: var(--t1); font-weight:600; }
+.nav-item.active .nav-sub{ color: var(--t3); }
+.nav-item.done .nav-title{ color: var(--green); }
+.nav-item:hover:not(.active) .nav-title{ color: var(--t2); }
+
+/* Sidebar footer */
+.sidebar-bottom{
+  border-top:1px solid var(--border);
+  padding-top:20px;
+  padding-left:8px;
+}
+
+.sidebar-credits{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t4);
+  line-height: 1.9;
+  letter-spacing: 0.3px;
+}
+.sidebar-credits strong{ color: var(--t3); }
+
+/* ── TOPBAR ─────────────────────────────────── */
+.content{
+  margin-left:248px;
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  position:relative;z-index:1;
+}
+
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 48px;height:52px;
+  border-bottom:1px solid var(--border);
+  background:rgba(8,13,20,0.8);
+  backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:100;
+}
+
+.topbar-left{
+  display:flex;align-items:center;gap:16px;
+}
+
+/* Tiny live indicator */
+.live-badge{
+  display:flex;align-items:center;gap:6px;
+  padding:4px 10px;border-radius:100px;
+  background:rgba(52,211,153,0.08);
+  border:1px solid rgba(52,211,153,0.15);
+}
+.live-dot{
+  width:5px;height:5px;border-radius:50%;
+  background:var(--green);
+  box-shadow:0 0 6px var(--green);
+  animation:livepulse 2.4s ease infinite;
+}
+@keyframes livepulse{ 0%,100%{opacity:1} 50%{opacity:0.3} }
+.live-text{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--green);
+}
+
+.topbar-title{
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--t3);
+  letter-spacing: 0.2px;
+}
+
+/* Progress */
+.prog-wrap{
+  display:flex;align-items:center;gap:8px;
+}
+
+.prog-step{
+  display:flex;align-items:center;gap:8px;
+}
+
+.prog-circle{
+  width:6px;height:6px;border-radius:50%;
+  border:1px solid var(--t4);
+  transition:all 0.35s;
+}
+.prog-circle.active{
+  background:var(--blue);border-color:var(--blue);
+  box-shadow:0 0 8px rgba(45,156,255,0.6);
+  transform:scale(1.5);
+}
+.prog-circle.done{
+  background:var(--green);border-color:var(--green);
+}
+.prog-dash{
+  width:20px;height:1px;
+  background:var(--border-2);
+  border-radius:1px;
+  transition: background 0.35s;
+}
+.prog-dash.done{ background:var(--green); }
+
+.topbar-btn{
+  font-family: var(--sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  color: var(--t3);
+  background: transparent;
+  border:1px solid var(--border-2);
+  padding:6px 14px;border-radius:100px;
+  cursor:pointer;transition:all 0.2s;
+}
+.topbar-btn:hover{ border-color:var(--border-3);color:var(--t2); }
+
+/* ── PAGES ──────────────────────────────────── */
+.page{
+  display:none;flex:1;
+  padding:52px 48px 32px;
+  animation:appear 0.4s cubic-bezier(0.4,0,0.2,1);
+  max-width:920px;
+}
+.page.active{ display:block; }
+
+@keyframes appear{
+  from{ opacity:0;transform:translateY(16px); }
+  to{   opacity:1;transform:translateY(0); }
+}
+
+/* ── PAGE HEADER ── */
+.page-header{ margin-bottom:48px; }
+
+.page-step{
+  display:inline-flex;align-items:center;gap:8px;
+  margin-bottom:20px;
+}
+
+.page-step-num{
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--blue);
+  letter-spacing: 1px;
+}
+
+.page-step-sep{
+  width:24px;height:1px;
+  background:var(--blue-line);
+}
+
+.page-step-label{
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--t3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* Title — DM Sans light + Instrument Serif italic pair */
+.page-title{
+  font-family: var(--sans);
+  font-size: clamp(2.4rem, 4.5vw, 3.6rem);
+  font-weight: 300;
+  letter-spacing: -2px;
+  line-height: 1.0;
+  color: var(--t1);
+  margin-bottom: 16px;
+}
+
+/* The italic accent word in serif */
+.page-title em{
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  color: var(--blue);
+  letter-spacing: -1px;
+}
+
+.page-desc{
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 300;
+  color: var(--t2);
+  max-width: 460px;
+  line-height: 1.75;
+  letter-spacing: 0.1px;
+}
+
+/* ── FORM SECTIONS ── */
+.form-block{ margin-bottom:40px; }
+
+.block-header{
+  display:flex;align-items:center;gap:14px;
+  margin-bottom:24px;
+}
+
+.block-label{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--t4);
+  white-space:nowrap;
+}
+
+.block-rule{
+  flex:1;height:1px;
+  background:var(--border);
+}
+
+.grid-2{ display:grid;grid-template-columns:repeat(2,1fr);gap:24px; }
+
+.field{ display:flex;flex-direction:column;gap:11px; }
+
+/* Field label — Apple style: clean, not shouting */
+.f-label{
+  display:flex;align-items:baseline;justify-content:space-between;
+  gap:8px;
+}
+
+.f-label-main{
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--t2);
+  letter-spacing: 0.1px;
+}
+
+.f-label-note{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--t4);
+  letter-spacing: 0.3px;
+  text-align: right;
+}
+
+/* ── CHIP BUTTONS ── */
+.chips{ display:flex;flex-wrap:wrap;gap:5px; }
+
+.chip{
+  padding:7px 16px;
+  border:1px solid var(--border-2);
+  border-radius:100px;
+  background:transparent;
+  color: var(--t3);
+  font-family: var(--sans);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  cursor:pointer;transition:all 0.18s;
+}
+
+.chip:hover{ border-color:var(--border-3);color:var(--t2); }
+
+.chip.active{
+  background:var(--blue-soft);
+  border-color:var(--blue-line);
+  color:var(--blue);
+  font-weight:500;
+}
+
+/* ── SLIDERS ── */
+.slider-wrap{ display:flex;flex-direction:column;gap:10px; }
+
+.slider-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+}
+
+/* The BIG number — Instrument Serif italic, striking */
+.slider-val-group{ display:flex;align-items:baseline;gap:4px; }
+
+.slider-val{
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 2.4rem;
+  font-weight: 400;
+  color: var(--t1);
+  line-height: 1;
+  letter-spacing: -1px;
+  transition: color 0.3s;
+}
+
+.slider-unit{
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 400;
+  color: var(--t3);
+  letter-spacing: 0.5px;
+  margin-bottom: 3px;
+}
+
+.slider-range{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t4);
+  letter-spacing: 0.5px;
+  text-align: right;
+}
+
+input[type=range]{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:1px;border:none;padding:0;
+  background:linear-gradient(to right,
+    var(--blue) 0%,var(--blue) var(--pct,50%),
+    var(--border-2) var(--pct,50%));
+  border-radius:100px;cursor:pointer;outline:none;
+}
+
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--t1);
+  border:none;
+  cursor:pointer;
+  box-shadow:0 0 0 1px var(--bg2), 0 0 0 2px var(--blue);
+  transition:transform 0.15s, box-shadow 0.15s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover{
+  transform:scale(1.25);
+  box-shadow:0 0 0 1px var(--bg2), 0 0 0 3px var(--blue), 0 0 12px rgba(45,156,255,0.3);
+}
+
+.slider-limits{
+  display:flex;justify-content:space-between;margin-top:2px;
+}
+
+.slider-limit{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t4);
+  letter-spacing: 0.3px;
+}
+
+/* ── YES/NO ── */
+.yn-pair{ display:grid;grid-template-columns:1fr 1fr;gap:6px; }
+
+.yn-btn{
+  padding:10px;
+  border:1px solid var(--border-2);
+  border-radius:var(--r);
+  background:transparent;
+  color:var(--t3);
+  font-family:var(--sans);
+  font-size:12px;font-weight:400;
+  cursor:pointer;transition:all 0.18s;
+  text-align:center;letter-spacing:0.2px;
+}
+
+.yn-btn:hover{ border-color:var(--border-3);color:var(--t2); }
+
+.yn-btn.yes.active{
+  background:var(--red-soft);border-color:rgba(255,77,106,0.3);color:var(--red);font-weight:500;
+}
+
+.yn-btn.no.active{
+  background:var(--blue-soft);border-color:var(--blue-line);color:var(--blue);font-weight:500;
+}
+
+/* ── ACTION BAR ── */
+.action-bar{
+  position:sticky;bottom:0;
+  background:rgba(8,13,20,0.9);
+  backdrop-filter:blur(16px);
+  border-top:1px solid var(--border);
+  padding:14px 48px;
+  display:flex;align-items:center;justify-content:space-between;
+  z-index:100;
+}
+
+.action-info{ display:flex;flex-direction:column;gap:2px; }
+
+.action-info-step{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t4);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.action-info-title{
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--t2);
+  letter-spacing: -0.1px;
+}
+
+.btn-group{ display:flex;gap:8px; }
+
+.btn{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:9px 22px;border-radius:100px;
+  font-family:var(--sans);
+  font-size:12px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;
+  border:1px solid transparent;
+  letter-spacing:0.2px;
+}
+
+.btn-ghost{
+  background:transparent;border-color:var(--border-2);color:var(--t3);
+}
+.btn-ghost:hover{ border-color:var(--border-3);color:var(--t2); }
+
+.btn-primary{
+  background:var(--blue);color:#fff;border-color:var(--blue);
+  font-weight:600;
+  box-shadow:0 0 20px rgba(45,156,255,0.2);
+}
+.btn-primary:hover{
+  background:#4daeff;
+  box-shadow:0 0 28px rgba(45,156,255,0.35);
+  transform:translateY(-1px);
+}
+
+.btn-run{
+  background:var(--t1);color:var(--bg);border-color:var(--t1);font-weight:600;
+}
+.btn-run:hover{ background:#fff;transform:translateY(-1px);box-shadow:0 4px 20px rgba(226,232,240,0.15); }
+
+/* ── RESULTS ── */
+.results-cols{ display:grid;grid-template-columns:1fr 280px;gap:18px;margin-top:28px; }
+
+/* Verdict card */
+.verdict-card{
+  border-radius:var(--r-xl);
+  padding:36px 40px;
+  margin-bottom:14px;
+  position:relative;overflow:hidden;
+  background:var(--bg2);
+  border:1px solid var(--border-2);
+}
+
+.verdict-card::before{
+  content:'';position:absolute;top:0;left:10%;right:10%;height:1px;
+  background:linear-gradient(to right,transparent,var(--blue),transparent);
+  opacity:0.4;
+}
+
+.scan-sweep{
+  position:absolute;left:0;right:0;height:1px;
+  background:linear-gradient(to right,transparent 10%,rgba(45,156,255,0.25) 50%,transparent 90%);
+  animation:sweep 6s ease-in-out infinite;top:0;
+}
+@keyframes sweep{ 0%{top:0;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{top:100%;opacity:0} }
+
+.verdict-row{ display:flex;align-items:center;justify-content:space-between;position:relative;z-index:1; }
+
+.verdict-eyebrow{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--t3);
+  margin-bottom: 14px;
+  display:flex;align-items:center;gap:8px;
+}
+.verdict-eyebrow::before{
+  content:'';width:16px;height:1px;background:currentColor;
+}
+
+/* Verdict title — big DM Sans light + serif italic mix */
+.verdict-title{
+  font-family: var(--sans);
+  font-size: 2.2rem;
+  font-weight: 300;
+  letter-spacing: -1.5px;
+  line-height: 1.05;
+  margin-bottom: 14px;
+}
+
+.verdict-title em{
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.verdict-title.is-safe{ color:var(--green); }
+.verdict-title.is-warn{ color:var(--amber); }
+.verdict-title.is-high{ color:var(--red); }
+
+.verdict-desc{
+  font-size: 12.5px;
+  font-weight: 300;
+  color: var(--t2);
+  max-width: 380px;
+  line-height: 1.75;
+  margin-bottom: 20px;
+  letter-spacing: 0.1px;
+}
+
+.verdict-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:5px 14px;border-radius:100px;
+  font-family:var(--mono);
+  font-size:9px;font-weight:500;
+  letter-spacing:1.5px;text-transform:uppercase;
+}
+
+.tag-safe{   background:var(--green-soft);color:var(--green);border:1px solid rgba(52,211,153,0.2); }
+.tag-warn{   background:var(--amber-soft);color:var(--amber);border:1px solid rgba(255,180,67,0.2); }
+.tag-high{   background:var(--red-soft);  color:var(--red);  border:1px solid rgba(255,77,106,0.2); }
+
+/* Score ring */
+.score-area{ text-align:center; }
+
+.score-ring{ position:relative;width:120px;height:120px;margin:0 auto 8px; }
+.score-ring svg{ transform:rotate(-90deg);width:120px;height:120px; }
+.score-ring circle{ fill:none;stroke-width:2;stroke-linecap:round; }
+.ring-track{ stroke:var(--border-2); }
+.ring-fill{
+  stroke-dasharray:352;stroke-dashoffset:352;
+  transition:stroke-dashoffset 1.8s cubic-bezier(0.4,0,0.2,1) 0.5s, stroke 0.4s;
+}
+.ring-core{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+}
+
+.ring-num{
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--t1);
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.ring-cap{
+  font-family: var(--mono);
+  font-size: 8px;
+  font-weight: 400;
+  color: var(--t3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top:4px;
+}
+
+.ring-foot{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 400;
+  color: var(--t4);
+  letter-spacing: 1.5px;
+  text-transform:uppercase;
+}
+
+/* Metrics */
+.metrics-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;
+}
+
+.metric-tile{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:18px 16px;
+  transition:all 0.2s;position:relative;overflow:hidden;
+}
+
+.metric-tile-top{
+  position:absolute;top:0;left:0;right:0;height:1px;
+  border-radius:1px 1px 0 0;
+}
+
+.metric-tile:hover{ transform:translateY(-2px); }
+.metric-tile.has-high:hover{ border-color:rgba(255,77,106,0.2); }
+.metric-tile.has-border:hover{ border-color:rgba(255,180,67,0.2); }
+.metric-tile.has-normal:hover{ border-color:rgba(52,211,153,0.2); }
+
+.metric-tile.has-high   .metric-tile-top{ background:var(--red);   box-shadow:0 0 8px var(--red); }
+.metric-tile.has-border .metric-tile-top{ background:var(--amber); box-shadow:0 0 8px var(--amber); }
+.metric-tile.has-normal .metric-tile-top{ background:var(--green); box-shadow:0 0 8px var(--green); }
+
+.tile-icon{ font-size:16px;margin-bottom:10px;display:block;line-height:1; }
+
+.tile-val{
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.75rem;
+  font-weight: 400;
+  color: var(--t1);
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.5px;
+}
+
+.tile-name{
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  color: var(--t3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display:block;
+}
+
+.tile-badge{
+  display:inline-block;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  padding:2px 8px;border-radius:3px;
+  letter-spacing:1px;text-transform:uppercase;
+}
+
+.b-normal{ background:var(--green-soft);color:var(--green); }
+.b-high{   background:var(--red-soft);  color:var(--red); }
+.b-border{ background:var(--amber-soft);color:var(--amber); }
+
+/* Factors */
+.factors-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:26px;
+}
+
+.factors-title{
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--t1);
+  letter-spacing: -0.2px;
+  margin-bottom: 4px;
+}
+
+.factors-sub{
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--t3);
+  margin-bottom: 24px;
+  letter-spacing: 0.1px;
+}
+
+.factor-row{
+  display:grid;grid-template-columns:140px 1fr 76px;
+  align-items:center;gap:14px;margin-bottom:16px;
+}
+
+.factor-name{
+  font-family: var(--sans);
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--t2);
+}
+
+.factor-track{
+  height:1px;background:var(--border-2);
+  border-radius:100px;overflow:visible;position:relative;
+}
+
+.factor-fill{
+  height:100%;border-radius:100px;width:0%;
+  transition:width 1.2s cubic-bezier(0.4,0,0.2,1);
+  position:relative;
+}
+
+.factor-fill::after{
+  content:'';position:absolute;right:-3px;top:-3px;
+  width:7px;height:7px;border-radius:50%;
+  background:currentColor;
+}
+
+.fill-low{ background:var(--green);color:var(--green); }
+.fill-mid{ background:var(--amber);color:var(--amber); }
+.fill-high{ background:var(--red);color:var(--red); }
+
+.factor-val{
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 400;
+  text-align: right;
+  color: var(--t3);
+}
+
+/* Sidebar cards */
+.info-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px;margin-bottom:10px;
+}
+
+.info-title{
+  font-family: var(--mono);
+  font-size: 8.5px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--t4);
+  padding-bottom:12px;margin-bottom:12px;
+  border-bottom:1px solid var(--border);
+  display:block;
+}
+
+.sum-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.025);
+}
+.sum-row:last-child{ border-bottom:none; }
+
+.sum-k{
+  font-size: 11.5px;
+  font-weight: 300;
+  color: var(--t3);
+}
+
+.sum-v{
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--t1);
+}
+
+.rec-row{
+  display:flex;gap:11px;padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,0.025);
+  align-items:flex-start;
+}
+.rec-row:last-child{ border-bottom:none; }
+
+.rec-icon{
+  width:30px;height:30px;border-radius:var(--r-sm);
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;flex-shrink:0;margin-top:1px;
+}
+
+.ri-g{ background:var(--green-soft);border:1px solid rgba(52,211,153,0.15); }
+.ri-a{ background:var(--amber-soft);border:1px solid rgba(255,180,67,0.15); }
+.ri-r{ background:var(--red-soft);  border:1px solid rgba(255,77,106,0.15); }
+
+.rec-title{
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--t1);
+  margin-bottom:3px;
+  letter-spacing:-0.1px;
+}
+
+.rec-desc{
+  font-size: 11px;
+  font-weight: 300;
+  color: var(--t3);
+  line-height: 1.6;
+}
+
+.reset-btn{
+  width:100%;padding:11px;
+  background:transparent;
+  border:1px solid var(--border-2);
+  border-radius:var(--r);
+  font-family:var(--sans);
+  font-size:11px;font-weight:500;
+  color:var(--t3);cursor:pointer;
+  transition:all 0.2s;letter-spacing:0.2px;
+}
+.reset-btn:hover{ border-color:var(--blue-line);color:var(--blue); }
+
+/* ── LOADING ── */
+.loading-overlay{
+  display:none;position:fixed;inset:0;z-index:999;
+  background:rgba(8,13,20,0.97);backdrop-filter:blur(8px);
+  flex-direction:column;align-items:center;justify-content:center;gap:28px;
+}
+.loading-overlay.show{ display:flex; }
+
+.loader{
+  position:relative;width:72px;height:72px;
+}
+.l-ring{
+  position:absolute;inset:0;border-radius:50%;
+  border:1px solid var(--border-2);animation:spin 3s linear infinite;
+}
+.l-ring:nth-child(2){
+  inset:12px;border-color:rgba(45,156,255,0.5);border-top-color:transparent;
+  animation-duration:1.8s;animation-direction:reverse;
+}
+.l-ring:nth-child(3){
+  inset:24px;border-color:rgba(52,211,153,0.35);border-right-color:transparent;
+  animation-duration:1.3s;
+}
+.l-center{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:8px;height:8px;border-radius:50%;
+  background:var(--blue);box-shadow:0 0 12px var(--blue);
+}
+@keyframes spin{ to{transform:rotate(360deg)} }
+
+.load-title{
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 300;
+  letter-spacing: -0.5px;
+  color: var(--t1);
+  text-align:center;
+}
+
+.load-title em{
+  font-family: var(--serif);
+  font-style:italic;
+  color:var(--blue);
+}
+
+.model-pills{ display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:360px; }
+
+.pill{
+  padding:5px 12px;border-radius:4px;
+  border:1px solid var(--border);
+  font-family:var(--mono);font-size:9.5px;font-weight:400;
+  color:var(--t4);letter-spacing:0.3px;
+  transition:all 0.25s;background:transparent;
+}
+.pill.on{
+  border-color:rgba(45,156,255,0.3);color:var(--blue);
+  background:var(--blue-soft);
+}
+
+.load-terminal{
+  font-family:var(--mono);font-size:10px;
+  color:var(--t3);line-height:1.9;
+  padding:14px 18px;background:var(--bg2);
+  border:1px solid var(--border-2);border-radius:var(--r);
+  width:310px;letter-spacing:0.2px;
+}
+
+.tc{ color:var(--blue); }
+.tg{ color:var(--green); }
+
+.load-status{
+  font-family:var(--mono);font-size:9px;
+  color:var(--t4);letter-spacing:2px;text-transform:uppercase;
+  animation:blink 2s ease infinite;
+}
+@keyframes blink{ 0%,100%{opacity:0.3} 50%{opacity:0.8} }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){
+  .sidebar{display:none}.content{margin-left:0}
+  .page{padding:28px 20px}.action-bar,.topbar{padding:12px 20px}
+  .grid-2{grid-template-columns:1fr}
+  .results-cols{grid-template-columns:1fr}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <span class="logo-sup">Medical AI </span>
+    <span class="logo-name">Glyco<span>Scan</span></span>
+    <span class="logo-tag">Neural diabetes risk assessment</span>
+  </div>
+
+  <div class="nav-section-label">Assessment pipeline</div>
+
+  <nav class="nav-list">
+    <div class="nav-item active" onclick="goPage(1)" id="nav1">
+      <div class="nav-dot"><span class="nav-dot-num">01</span></div>
+      <div class="nav-labels">
+        <span class="nav-title">Patient Profile</span>
+        <span class="nav-sub">Demographics · Physique</span>
+      </div>
+    </div>
+    <div class="nav-item" onclick="goPage(2)" id="nav2">
+      <div class="nav-dot"><span class="nav-dot-num">02</span></div>
+      <div class="nav-labels">
+        <span class="nav-title">Clinical Data</span>
+        <span class="nav-sub">Blood · Vitals · Biomarkers</span>
+      </div>
+    </div>
+    <div class="nav-item" onclick="goPage(3)" id="nav3">
+      <div class="nav-dot"><span class="nav-dot-num">03</span></div>
+      <div class="nav-labels">
+        <span class="nav-title">Lifestyle & History</span>
+        <span class="nav-sub">Habits · Medical background</span>
+      </div>
+    </div>
+    <div class="nav-item" onclick="goPage(4)" id="nav4">
+      <div class="nav-dot"><span class="nav-dot-num">04</span></div>
+      <div class="nav-labels">
+        <span class="nav-title">Risk Analysis</span>
+        <span class="nav-sub">Model output · Score</span>
+      </div>
+    </div>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-credits">
+      <strong>GlycoScan</strong><br/>
+      Python for Data Science 2<br/>
+      Tutor: Haythem Ghazouani
+    </div>
+  </div>
+</aside>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="loader">
+    <div class="l-ring"></div>
+    <div class="l-ring"></div>
+    <div class="l-ring"></div>
+    <div class="l-center"></div>
+  </div>
+  <div class="load-title">Analysing <em>patient data</em></div>
+  <div class="model-pills">
+    <div class="pill" id="pill-lr">Logistic Regression</div>
+    <div class="pill" id="pill-knn">K-Nearest Neighbors</div>
+    <div class="pill" id="pill-rf">Random Forest</div>
+    <div class="pill" id="pill-agg">Aggregation</div>
+  </div>
+  <div class="load-terminal">
+    <span class="tg">✓</span> Pipeline initialised<br/>
+    <span class="tc" id="term2">&nbsp;</span><br/>
+    <span id="term3" class="tg">&nbsp;</span>
+  </div>
+  <div class="load-status" id="loading-msg">Processing…</div>
+</div>
+
+<!-- MAIN -->
+<main class="content">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="live-badge">
+        <div class="live-dot"></div>
+        <span class="live-text">Live</span>
+      </div>
+      <span class="topbar-title">Diabetes Risk Prediction System</span>
+    </div>
+    <div class="prog-wrap">
+      <div class="prog-circle active" id="pd1"></div>
+      <div class="prog-dash" id="pc1"></div>
+      <div class="prog-circle" id="pd2"></div>
+      <div class="prog-dash" id="pc2"></div>
+      <div class="prog-circle" id="pd3"></div>
+      <div class="prog-dash" id="pc3"></div>
+      <div class="prog-circle" id="pd4"></div>
+    </div>
+    <button class="topbar-btn" onclick="resetAll()">↺ New patient</button>
+  </div>
+
+  <!-- PAGE 1 -->
+  <div class="page active" id="page1">
+    <div class="page-header">
+      <div class="page-step">
+        <span class="page-step-num">01</span>
+        <div class="page-step-sep"></div>
+        <span class="page-step-label">Patient Profile</span>
+      </div>
+      <h1 class="page-title">Patient<br/><em>Profile</em></h1>
+      <p class="page-desc">Basic demographic and physical characteristics — used to calibrate clinical thresholds and contextualise biomarker readings.</p>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Demographics</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Biological sex</span>
+          </div>
+          <div class="chips">
+            <button class="chip active" onclick="setChip(this,'gender','Male')">Male</button>
+            <button class="chip" onclick="setChip(this,'gender','Female')">Female</button>
+          </div>
+          <input type="hidden" id="gender" value="Male"/>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Age</span>
+            <span class="f-label-note">years at assessment</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">20 – 79</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="age-v">45</span>
+                <span class="slider-unit">yrs</span>
+              </div>
+            </div>
+            <input type="range" id="age" min="20" max="79" value="45" oninput="upSlider(this,'age-v',20,79)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Young adult</span>
+              <span class="slider-limit">Elderly</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Physical metrics</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Body mass index</span>
+            <span class="f-label-note">weight / height²</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">15 – 50</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="bmi-v">28.0</span>
+                <span class="slider-unit">kg/m²</span>
+              </div>
+            </div>
+            <input type="range" id="bmi" min="15" max="50" step="0.1" value="28" oninput="upSlider(this,'bmi-v',15,50)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Underweight</span>
+              <span class="slider-limit">Obese III</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Skin thickness</span>
+            <span class="f-label-note">triceps skinfold</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">7 – 57</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="skin-v">20</span>
+                <span class="slider-unit">mm</span>
+              </div>
+            </div>
+            <input type="range" id="skin" min="7" max="57" value="20" oninput="upSlider(this,'skin-v',7,57)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Lean</span>
+              <span class="slider-limit">High adiposity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 2 -->
+  <div class="page" id="page2">
+    <div class="page-header">
+      <div class="page-step">
+        <span class="page-step-num">02</span>
+        <div class="page-step-sep"></div>
+        <span class="page-step-label">Clinical Data</span>
+      </div>
+      <h1 class="page-title">Clinical<br/><em>Measurements</em></h1>
+      <p class="page-desc">Key biomarkers from blood panels and routine assessments. These carry the highest predictive weight in the risk models.</p>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Blood analysis</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Plasma glucose</span>
+            <span class="f-label-note">2h post-load</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">40 – 200</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="glucose-v">120</span>
+                <span class="slider-unit">mg/dL</span>
+              </div>
+            </div>
+            <input type="range" id="glucose" min="40" max="200" value="120" oninput="upSlider(this,'glucose-v',40,200)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Normal &lt;100</span>
+              <span class="slider-limit">Diabetic &gt;126</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Serum insulin</span>
+            <span class="f-label-note">2h post-load</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">15 – 276</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="insulin-v">80</span>
+                <span class="slider-unit">µU/mL</span>
+              </div>
+            </div>
+            <input type="range" id="insulin" min="15" max="276" value="80" oninput="upSlider(this,'insulin-v',15,276)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Fasting low</span>
+              <span class="slider-limit">Resistance range</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Total cholesterol</span>
+            <span class="f-label-note">fasting serum</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">100 – 320</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="chol-v">190</span>
+                <span class="slider-unit">mg/dL</span>
+              </div>
+            </div>
+            <input type="range" id="chol" min="100" max="320" value="190" oninput="upSlider(this,'chol-v',100,320)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Optimal</span>
+              <span class="slider-limit">High risk</span>
+            </div>
+          </div>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Diabetes pedigree</span>
+            <span class="f-label-note">genetic likelihood score</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">0.10 – 2.50</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="dpf-v">0.50</span>
+              </div>
+            </div>
+            <input type="range" id="dpf" min="0.1" max="2.5" step="0.01" value="0.5" oninput="upSlider(this,'dpf-v',0.1,2.5)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Low heredity</span>
+              <span class="slider-limit">Strong heredity</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Vital signs</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Diastolic blood pressure</span>
+            <span class="f-label-note">resting</span>
+          </div>
+          <div class="slider-wrap">
+            <div class="slider-header">
+              <span class="slider-range">30 – 114</span>
+              <div class="slider-val-group">
+                <span class="slider-val" id="bp-v">70</span>
+                <span class="slider-unit">mmHg</span>
+              </div>
+            </div>
+            <input type="range" id="bp" min="30" max="114" value="70" oninput="upSlider(this,'bp-v',30,114)"/>
+            <div class="slider-limits">
+              <span class="slider-limit">Hypotension</span>
+              <span class="slider-limit">Stage 2</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 3 -->
+  <div class="page" id="page3">
+    <div class="page-header">
+      <div class="page-step">
+        <span class="page-step-num">03</span>
+        <div class="page-step-sep"></div>
+        <span class="page-step-label">Lifestyle & History</span>
+      </div>
+      <h1 class="page-title">Lifestyle &amp;<br/><em>History</em></h1>
+      <p class="page-desc">Behavioural patterns and medical history — these modulate the base clinical risk score and refine the final prediction.</p>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Activity & habits</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label"><span class="f-label-main">Physical activity level</span></div>
+          <div class="chips">
+            <button class="chip" onclick="setChip(this,'activity','Low')">Sedentary</button>
+            <button class="chip active" onclick="setChip(this,'activity','Moderate')">Moderate</button>
+            <button class="chip" onclick="setChip(this,'activity','High')">Active</button>
+          </div>
+          <input type="hidden" id="activity" value="Moderate"/>
+        </div>
+        <div class="field">
+          <div class="f-label"><span class="f-label-main">Smoking status</span></div>
+          <div class="chips">
+            <button class="chip active" onclick="setChip(this,'smoking','Never')">Never smoked</button>
+            <button class="chip" onclick="setChip(this,'smoking','Former')">Former smoker</button>
+            <button class="chip" onclick="setChip(this,'smoking','Current')">Current smoker</button>
+          </div>
+          <input type="hidden" id="smoking" value="Never"/>
+        </div>
+        <div class="field">
+          <div class="f-label"><span class="f-label-main">Alcohol consumption</span></div>
+          <div class="chips">
+            <button class="chip active" onclick="setChip(this,'alcohol','None')">Never</button>
+            <button class="chip" onclick="setChip(this,'alcohol','Occasional')">Occasional</button>
+            <button class="chip" onclick="setChip(this,'alcohol','Regular')">Regular</button>
+          </div>
+          <input type="hidden" id="alcohol" value="None"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-block">
+      <div class="block-header">
+        <span class="block-label">Medical history</span>
+        <div class="block-rule"></div>
+      </div>
+      <div class="grid-2">
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Family history of diabetes</span>
+            <span class="f-label-note">first-degree relative</span>
+          </div>
+          <div class="yn-pair">
+            <button class="yn-btn no active" onclick="setYN(this,'family','No')">No</button>
+            <button class="yn-btn yes" onclick="setYN(this,'family','Yes')">Yes</button>
+          </div>
+          <input type="hidden" id="family" value="No"/>
+        </div>
+        <div class="field">
+          <div class="f-label">
+            <span class="f-label-main">Hypertension diagnosis</span>
+            <span class="f-label-note">previously confirmed</span>
+          </div>
+          <div class="yn-pair">
+            <button class="yn-btn no active" onclick="setYN(this,'hypertension','No')">No</button>
+            <button class="yn-btn yes" onclick="setYN(this,'hypertension','Yes')">Yes</button>
+          </div>
+          <input type="hidden" id="hypertension" value="No"/>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE 4 — RESULTS -->
+  <div class="page" id="page4">
+    <div class="page-header">
+      <div class="page-step">
+        <span class="page-step-num">—</span>
+        <div class="page-step-sep"></div>
+        <span class="page-step-label">Assessment complete</span>
+      </div>
+      <h1 class="page-title">Risk<br/><em>Analysis</em></h1>
+      <p class="page-desc">Ensemble output from three independent classifiers, aggregated into a unified probability score.</p>
+    </div>
+
+    <div class="verdict-card">
+      <div class="scan-sweep"></div>
+      <div class="verdict-row">
+        <div>
+          <div class="verdict-eyebrow">Diagnostic indicator</div>
+          <div class="verdict-title" id="verdict-text">—</div>
+          <p class="verdict-desc" id="verdict-desc">—</p>
+          <span class="verdict-tag" id="verdict-badge">—</span>
+        </div>
+        <div class="score-area">
+          <div class="score-ring">
+            <svg viewBox="0 0 110 110">
+              <circle class="ring-track" cx="55" cy="55" r="52"/>
+              <circle class="ring-fill" id="ring-prog" cx="55" cy="55" r="52"/>
+            </svg>
+            <div class="ring-core">
+              <div class="ring-num" id="score-num">—</div>
+              <div class="ring-cap">Risk score</div>
+            </div>
+          </div>
+          <div class="ring-foot">Probability estimate</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="results-cols">
+      <div>
+        <div class="metrics-grid" id="metrics-grid"></div>
+        <div class="factors-card">
+          <div class="factors-title">Contributing risk factors</div>
+          <div class="factors-sub">Relative contribution of each variable to the aggregate model score.</div>
+          <div id="factor-rows"></div>
+        </div>
+      </div>
+      <div>
+        <div class="info-card">
+          <span class="info-title">Patient summary</span>
+          <div id="patient-summary"></div>
+        </div>
+        <div class="info-card">
+          <span class="info-title">Clinical recommendations</span>
+          <div id="recommendations"></div>
+        </div>
+        <button class="reset-btn" onclick="resetAll()">↺ Begin new assessment</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar" id="action-bar">
+    <div class="action-info">
+      <span class="action-info-step" id="a-step">Step 01</span>
+      <span class="action-info-title" id="a-title">Patient Profile</span>
+    </div>
+    <div class="btn-group">
+      <button class="btn btn-ghost" id="btn-back" onclick="prevPage()" style="display:none">← Back</button>
+      <button class="btn btn-primary" id="btn-next" onclick="nextPage()">Continue →</button>
+    </div>
+  </div>
+
+</main>
+
+<script>
+let cur = 1;
+const tot = 3;
+const info = [null,
+  {step:'Step 01', title:'Patient Profile'},
+  {step:'Step 02', title:'Clinical Measurements'},
+  {step:'Step 03', title:'Lifestyle & History'},
+  {step:'Done',   title:'Risk Analysis'},
+];
+
+function upSlider(el, lid, min, max){
+  const p = ((el.value-min)/(max-min))*100;
+  el.style.setProperty('--pct', p+'%');
+  const v = parseFloat(el.value);
+  document.getElementById(lid).textContent = (v%1===0) ? v : v.toFixed(2);
+}
+
+function setChip(btn, id, val){
+  btn.closest('.chips').querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).value = val;
+}
+
+function setYN(btn, id, val){
+  btn.closest('.yn-pair').querySelectorAll('.yn-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).value = val;
+}
+
+function goPage(n){
+  if(n>tot && cur<tot) return;
+  document.getElementById('page'+cur).classList.remove('active');
+  document.getElementById('nav'+cur).classList.remove('active');
+  if(cur<n) document.getElementById('nav'+cur).classList.add('done');
+  cur = n;
+  document.getElementById('page'+cur).classList.add('active');
+  document.getElementById('nav'+cur).classList.add('active');
+  document.getElementById('nav'+cur).classList.remove('done');
+  updateBar();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function nextPage(){ if(cur<tot) goPage(cur+1); else runAnalysis(); }
+function prevPage(){ if(cur>1) goPage(cur-1); }
+
+function updateBar(){
+  const d = info[cur];
+  document.getElementById('a-step').textContent = d.step;
+  document.getElementById('a-title').textContent = d.title;
+  document.getElementById('btn-back').style.display = cur>1 ? 'flex' : 'none';
+  const btn = document.getElementById('btn-next');
+  if(cur === tot){ btn.textContent = 'Run analysis →'; btn.className='btn btn-run'; }
+  else{ btn.textContent = 'Continue →'; btn.className='btn btn-primary'; }
+  document.getElementById('action-bar').style.display = cur===4 ? 'none' : 'flex';
+  for(let i=1;i<=4;i++){
+    const el = document.getElementById('pd'+i);
+    el.className = 'prog-circle';
+    if(i<cur) el.classList.add('done');
+    else if(i===cur) el.classList.add('active');
+  }
+  for(let i=1;i<=3;i++){
+    const c = document.getElementById('pc'+i);
+    if(c){ c.className='prog-dash'; if(i<cur) c.classList.add('done'); }
+  }
+}
+
+async function runAnalysis() {
+    const overlay = document.getElementById('loading');
+    overlay.classList.add('show');
+
+    // Préparation des données
+    const patientData = {
+        Gender: document.getElementById('gender').value,
+        Age: parseInt(document.getElementById('age').value),
+        Physical_Activity: document.getElementById('activity').value,
+        Smoking_Status: document.getElementById('smoking').value,
+        // Correction : On s'assure que si c'est "None", on envoie une valeur compatible
+        Alcohol_Intake: document.getElementById('alcohol').value === "None" ? null : document.getElementById('alcohol').value,
+        Glucose: parseFloat(document.getElementById('glucose').value),
+        Blood_Pressure: parseFloat(document.getElementById('bp').value),
+        Skin_Thickness: parseFloat(document.getElementById('skin').value),
+        Insulin: parseFloat(document.getElementById('insulin').value),
+        BMI: parseFloat(document.getElementById('bmi').value),
+        Cholesterol: parseFloat(document.getElementById('chol').value),
+        Diabetes_Pedigree_Function: parseFloat(document.getElementById('dpf').value),
+        Family_History: document.getElementById('family').value,
+        Hypertension: document.getElementById('hypertension').value
+    };
+
+    console.log("Données envoyées :", patientData); // Pour le debug
+
+    try {
+        // Testez 'http://localhost:8000/predict' si '127.0.0.1' échoue
+        const response = await fetch('http://127.0.0.1:8000/predict', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patientData)
+        });
+
+        if (!response.ok) {
+            const errorDetails = await response.json();
+            console.error("Détails de l'erreur API :", errorDetails);
+            throw new Error(`Erreur API ${response.status} : ${JSON.stringify(errorDetails)}`);
+        }
+
+        const data = await response.json();
+
+        // Animation des "pills"
+        const pills = ['pill-lr', 'pill-knn', 'pill-rf', 'pill-agg'];
+        for (let i = 0; i < pills.length; i++) {
+            await new Promise(r => setTimeout(r, 400));
+            document.querySelectorAll('.pill').forEach(p => p.classList.remove('on'));
+            document.getElementById(pills[i]).classList.add('on');
+            
+            if (i === 0) document.getElementById('term2').innerHTML = `LogReg: ${data.models["Logistic Regression"].risk_percent}%`;
+            if (i === 1) document.getElementById('term2').innerHTML = `KNN: ${data.models["KNN"].risk_percent}%`;
+            if (i === 2) document.getElementById('term2').innerHTML = `RF: ${data.models["Random Forest"].risk_percent}%`;
+            if (i === 3) document.getElementById('term3').innerHTML = `<span class="tg">✓</span> Ensemble: ${data.ensemble.risk_percent}%`;
+        }
+
+        setTimeout(() => {
+            overlay.classList.remove('show');
+            buildResults(data);
+            goPage(4);
+        }, 600);
+
+    } catch (error) {
+        console.error("Erreur complète :", error);
+        alert("Erreur : " + error.message);
+        overlay.classList.remove('show');
+    }
+}
+
+
+function computeScore(){
+  const glucose=+document.getElementById('glucose').value,
+        bmi=+document.getElementById('bmi').value,
+        age=+document.getElementById('age').value,
+        bp=+document.getElementById('bp').value,
+        insulin=+document.getElementById('insulin').value,
+        dpf=+document.getElementById('dpf').value,
+        chol=+document.getElementById('chol').value,
+        family=document.getElementById('family').value,
+        hypert=document.getElementById('hypertension').value,
+        smoking=document.getElementById('smoking').value,
+        activity=document.getElementById('activity').value;
+  let s=0;
+  const gS=glucose>140?0.35:glucose>110?0.22:glucose>90?0.1:0.03;
+  const bS=bmi>35?0.22:bmi>30?0.15:bmi>25?0.08:0.02;
+  const aS=age>60?0.12:age>45?0.08:age>30?0.04:0.01;
+  const dS=Math.min(dpf/2.5,1)*0.1;
+  s+=gS+bS+aS+dS;
+  if(family==='Yes')s+=0.12; if(hypert==='Yes')s+=0.08;
+  if(bp>90)s+=0.05; else if(bp>75)s+=0.02;
+  if(insulin>150)s+=0.04;
+  if(smoking==='Current')s+=0.05; else if(smoking==='Former')s+=0.02;
+  if(activity==='High')s-=0.07; else if(activity==='Moderate')s-=0.03;
+  s=Math.max(0.04,Math.min(0.96,s));
+  return{s,gS,bS,aS,dS,glucose,bmi,age,bp,insulin,dpf,chol,family,hypert,smoking,activity};
+}
+
+function buildResults(apiData) {
+    const ens = apiData.ensemble;
+    const models = apiData.models;
+    const inputs = apiData.patient_data;
+    
+    const prob = ens.probability;
+    const danger = prob >= 0.5;
+    const warn = prob >= 0.3 && prob < 0.5;
+
+    // Mise à jour du score circulaire
+    const circ = 2 * Math.PI * 52;
+    const rp = document.getElementById('ring-prog');
+    rp.style.strokeDashoffset = circ * (1 - prob);
+    rp.style.stroke = danger ? 'var(--red)' : warn ? 'var(--amber)' : 'var(--green)';
+    document.getElementById('score-num').textContent = Math.round(prob * 100) + '%';
+
+    // Verdict text
+    const vt = document.getElementById('verdict-text'),
+          vd = document.getElementById('verdict-desc'),
+          vb = document.getElementById('verdict-badge');
+
+    if (danger) {
+        vt.innerHTML = 'High<br/><em>Diabetes Risk</em>'; vt.className = 'verdict-title is-high';
+        vd.textContent = 'The ensemble model identifies high probability of diabetes. Clinical intervention is recommended.';
+        vb.innerHTML = '⚠ High Risk'; vb.className = 'verdict-tag tag-high';
+    } else if (warn) {
+        vt.innerHTML = 'Borderline<br/><em>Risk Detected</em>'; vt.className = 'verdict-title is-warn';
+        vd.textContent = 'Results are in the borderline range. Lifestyle adjustments could mitigate future risks.';
+        vb.innerHTML = '△ Warning'; vb.className = 'verdict-tag tag-warn';
+    } else {
+        vt.innerHTML = 'Low<br/><em>Risk Profile</em>'; vt.className = 'verdict-title is-safe';
+        vd.textContent = 'The models indicate a healthy metabolic profile. Continue regular screenings.';
+        vb.innerHTML = '✓ Low Risk'; vb.className = 'verdict-tag tag-safe';
+    }
+
+    // Metrics Grid (Valeurs réelles envoyées)
+    const glS = inputs.Glucose > 126 ? ['High','b-high','has-high'] : inputs.Glucose > 100 ? ['Borderline','b-border','has-border'] : ['Normal','b-normal','has-normal'];
+    
+    const metrics = [
+        {icon:'🩸', val: inputs.Glucose, unit:'mg/dL', name:'Glucose', st: glS, cls: glS[2]},
+        {icon:'⚖️', val: inputs.BMI.toFixed(1), unit:'kg/m²', name:'BMI', st: [inputs.BMI>30?'High':'Normal', inputs.BMI>30?'b-high':'b-normal'], cls: inputs.BMI>30?'has-high':'has-normal'},
+        {icon:'💊', val: inputs.Blood_Pressure, unit:'mmHg', name:'BP', st: [inputs.Blood_Pressure>90?'High':'Normal', inputs.Blood_Pressure>90?'b-high':'b-normal'], cls: inputs.Blood_Pressure>90?'has-high':'has-normal'},
+        {icon:'🫀', val: inputs.Cholesterol, unit:'mg/dL', name:'Cholesterol', st: [inputs.Cholesterol>200?'High':'Normal', inputs.Cholesterol>200?'b-high':'b-normal'], cls: inputs.Cholesterol>200?'has-high':'has-normal'}
+    ];
+
+    document.getElementById('metrics-grid').innerHTML = metrics.map(m => `
+        <div class="metric-tile ${m.cls}">
+            <div class="metric-tile-top"></div>
+            <span class="tile-icon">${m.icon}</span>
+            <div class="tile-val">${m.val}</div>
+            <span class="tile-name">${m.name}</span>
+            <span class="tile-badge ${m.st[1]}">${m.st[0]}</span>
+        </div>`).join('');
+
+    // Barre de contribution des modèles (on remplace les facteurs par les scores des modèles)
+    const modelScores = [
+        {name: 'Random Forest', prob: models["Random Forest"].probability},
+        {name: 'Logistic Regression', prob: models["Logistic Regression"].probability},
+        {name: 'KNN', prob: models["KNN"].probability}
+    ];
+
+    document.getElementById('factor-rows').innerHTML = modelScores.map(m => {
+        const p = Math.round(m.prob * 100);
+        const cls = p > 50 ? 'fill-high' : p > 30 ? 'fill-mid' : 'fill-low';
+        return `<div class="factor-row">
+            <div class="factor-name">${m.name}</div>
+            <div class="factor-track"><div class="factor-fill ${cls}" style="width:${p}%"></div></div>
+            <div class="factor-val">${p}%</div>
+        </div>`;
+    }).join('');
+
+    // Résumé Patient
+    document.getElementById('patient-summary').innerHTML = `
+        <div class="sum-row"><span class="sum-k">Age</span><span class="sum-v">${inputs.Age}</span></div>
+        <div class="sum-row"><span class="sum-k">Gender</span><span class="sum-v">${inputs.Gender}</span></div>
+        <div class="sum-row"><span class="sum-k">Smoking</span><span class="sum-v">${inputs.Smoking_Status}</span></div>
+        <div class="sum-row"><span class="sum-k">Activity</span><span class="sum-v">${inputs.Physical_Activity}</span></div>
+    `;
+}
+
+function resetAll(){
+  cur=1;
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page1').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active','done'));
+  document.getElementById('nav1').classList.add('active');
+  updateBar();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+document.querySelectorAll('input[type=range]').forEach(el=>{
+  const lid=el.id+'-v';
+  if(document.getElementById(lid)) upSlider(el,lid,+el.min,+el.max);
+});
+updateBar();
+</script>
+</body>
+</html>

@@ -1,0 +1,29 @@
+# 1. Base image — Python 3.9 lightweight Linux
+FROM python:3.11-slim
+
+# 2. Working directory inside the container
+WORKDIR /app
+
+# 3. System dependencies for ML libraries
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# 4. Copy requirements FIRST (Docker layer caching)
+#    If requirements don't change, pip install is skipped next build
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 5. Copy code, data and models
+COPY code/ ./code/
+COPY data/ ./data/
+COPY models/ ./models/
+
+# 6. Create empty __init__.py so uvicorn finds the module
+RUN touch code/__init__.py
+
+# 7. Expose API port
+EXPOSE 8000
+
+# 8. Start the FastAPI server with uvicorn
+CMD ["uvicorn", "code.api:app", "--host", "0.0.0.0", "--port", "8000"]
